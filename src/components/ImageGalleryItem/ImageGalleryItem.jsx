@@ -1,14 +1,15 @@
 import PropTypes from 'prop-types';
 import { ContainerImage, ImageWeb } from './ImageGalleryItem.styled';
-// import { Modal } from '../Modal/Modal';
 
-export const ImageGalleryItem = ({ webImage, largeImage }) => {
-  // console.log('item :>> ', this.prop.item);
+export const ImageGalleryItem = ({ webImage, largeImage, onClick }) => {
   return (
     <>
-      {/* <Modal largeImageURL={largeImage} /> */}
       <ContainerImage className="gallery-item">
-        <ImageWeb src={webImage} alt="Images and photos" />
+        <ImageWeb
+          src={webImage}
+          onClick={() => onClick(largeImage)}
+          alt="Images and photos"
+        />
       </ContainerImage>
     </>
   );
@@ -17,4 +18,5 @@ export const ImageGalleryItem = ({ webImage, largeImage }) => {
 ImageGalleryItem.propTypes = {
   webImage: PropTypes.string.isRequired,
   largeImage: PropTypes.string.isRequired,
+  onClick: PropTypes.func.isRequired,
 };

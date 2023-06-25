@@ -1,49 +1,58 @@
 import { Component } from 'react';
-import { BsSearch } from 'react-icons/bs';
 import PropTypes from 'prop-types';
-import { SearchBar, SearchForm } from './Searchbar.styled';
+import { BsSearch } from 'react-icons/bs';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { SearchBar, SearchForm, Input, ButtonSearch } from './Searchbar.styled';
 
-class Searchbar extends Component {
+const notifyOptions = {
+  position: 'top-right',
+  autoClose: 3000,
+  hideProgressBar: false,
+  closeOnClick: true,
+  pauseOnHover: true,
+  draggable: true,
+  progress: undefined,
+  theme: 'colored',
+};
+
+export default class Searchbar extends Component {
   state = {
-    queryForm: '',
+    query: '',
   };
 
-  handleChange = e => {
-    const value = e.target.value.toLowerCase().trim();
-    this.setState({ queryForm: value });
+  handleChangeInput = e => {
+    this.setState({ query: e.currentTarget.value.toLowerCase() });
   };
 
   handleSubmit = e => {
     e.preventDefault();
-
-    if (this.state.queryForm.trim() === '') {
-      alert('enter name images or photos');
+    if (this.state.query.trim() === '') {
+      toast.error(
+        'The search string cannot be empty. Please specify your search query.',
+        notifyOptions
+      );
       return;
     }
-    this.props.onSubmit(this.state.queryForm);
-
-    this.resetForm();
-  };
-
-  resetForm = () => {
-    this.setState({ queryForm: '' });
+    this.props.onSubmitFom(this.state.query);
+    this.setState({ query: '' });
   };
   render() {
+    const { query } = this.state;
     return (
       <SearchBar>
         <SearchForm onSubmit={this.handleSubmit}>
-          <button type="submit" className="button">
-            <span className="button-label">
-              <BsSearch />
-            </span>
-          </button>
-          <input
-            onChange={this.handleChange}
-            className="input"
+          <ButtonSearch type="submit">
+            <BsSearch />
+          </ButtonSearch>
+
+          <Input
+            name="query"
+            value={query}
+            onChange={this.handleChangeInput}
             type="text"
-            value={this.state.queryForm}
-            // autocomplete="off"
-            // autofocus
+            autoComplete="off"
+            autoFocus={true}
             placeholder="Search images and photos"
           />
         </SearchForm>
@@ -53,7 +62,5 @@ class Searchbar extends Component {
 }
 
 Searchbar.propTypes = {
-  onSubmit: PropTypes.func.isRequired,
+  onSubmitFom: PropTypes.func.isRequired,
 };
-
-export default Searchbar;

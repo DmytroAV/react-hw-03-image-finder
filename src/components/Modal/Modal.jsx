@@ -1,12 +1,12 @@
 import PropTypes from 'prop-types';
 import { Overlay, ModalImg } from './Modal.styled';
 
-export const Modal = ({ largeImageURL }) => {
+export const Modal = ({ url, closeModal }) => {
   return (
     <>
       <Overlay>
         <ModalImg>
-          <img src={largeImageURL} alt="" />
+          <img src={url} alt="" onClick={closeModal} />
         </ModalImg>
       </Overlay>
     </>
@@ -14,5 +14,6 @@ export const Modal = ({ largeImageURL }) => {
 };
 
 Modal.propTypes = {
-  largeImageURL: PropTypes.string.isRequired,
+  url: PropTypes.string.isRequired,
+  closeModal: PropTypes.func.isRequired,
 };

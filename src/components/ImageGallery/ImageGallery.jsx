@@ -1,59 +1,144 @@
 import { Component } from 'react';
-import fetchImage from '../services/fetchImage';
+import { fetchImages } from '../../services/fetchImage';
 import { Loader } from '../Loader/Loader';
 import { ImageGalleryItem } from '../ImageGalleryItem/ImageGalleryItem';
+import { Modal } from '../Modal/Modal';
 import { Button } from '../Button/Button';
 import { ContainerGallery } from './ImageGallery.styled';
+import { ErrorMessage } from '../ErrorMessage/ErrorMessage';
+import { HTTP_ERR_MSG } from '../../constants';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import PropTypes from 'prop-types';
 
+const notifyOptions = {
+  position: 'top-right',
+  autoClose: 3000,
+  hideProgressBar: false,
+  closeOnClick: true,
+  pauseOnHover: true,
+  draggable: true,
+  progress: undefined,
+  theme: 'colored',
+};
 class ImageGallery extends Component {
   state = {
     items: [],
+    currentQuery: '',
+    largeImage: '',
+    page: 1,
     isLoader: false,
-    isOpen: false,
+    isOpenModal: false,
+    error: null,
   };
 
+  componentDidMount() {
+    window.addEventListener('click', this.handleCloseModal);
+    window.addEventListener('keydown', this.closeModalOnEscape);
+  }
+
   componentDidUpdate(prevProps, prevState) {
+    const page = this.state.page;
+
     if (prevProps !== this.props) {
-      this.fetchImages();
+      this.fetchImages(this.props.query, page);
+    }
+    if (prevState.page !== page) {
+      this.fetchImages(this.state.currentQuery, page);
     }
   }
 
-  fetchImages = () => {
-    this.setState({ isLoader: true });
-    const query = this.props.query;
-    fetchImage(query)
-      .then(({ hits }) => {
-        this.setState({ items: hits });
-      })
-      .finally(this.setState({ isLoader: false }));
+  componentWillUnmount() {
+    document.removeEventListener('click', this.handleCloseModal);
+    document.removeEventListener('keydown', this.closeModalOnEscape);
+  }
+
+  fetchImages = async (query, page) => {
+    this.setState({
+      isLoader: true,
+      currentQuery: query,
+      error: null,
+    });
+
+    if (query !== this.state.currentQuery) {
+      this.setState({ items: [], page: 1 });
+    }
+
+    try {
+      const data = await fetchImages(query, page);
+
+      if (data.hits.length <= 0) {
+        toast.error(
+          `Sorry, there are no images matching your search query '${query}'. Please try again.`,
+          notifyOptions
+        );
+        return;
+      }
+
+      if (data.hits.length > 0 && page === 1) {
+        toast.success(`Found ${data.totalHits} images`, notifyOptions);
+      }
+      this.setState(state => ({
+        items: [...state.items, ...data.hits],
+      }));
+    } catch (error) {
+      if (error) {
+        if (error.code !== 'ERR_CANCELED') {
+          this.setState({ error: HTTP_ERR_MSG });
+        }
+      }
+    } finally {
+      this.setState({ isLoader: false });
+    }
   };
 
-  handleOpenModal = () => {
-    this.setState({ isOpen: true });
+  handleLoadMore = () => {
+    this.setState(state => ({ page: (state.page += 1) }));
   };
-  handleCloseModal = () => {
-    this.setState({ isOpen: false });
+
+  handleOpenModal = url =>
+    this.setState({
+      isOpenModal: true,
+      largeImage: url,
+    });
+
+  handleCloseModal = e => {
+    const name = e.target.tagName;
+    if (name === 'IMG') {
+      return;
+    }
+    this.setState({ isOpenModal: false });
+  };
+
+  closeModalOnEscape = e => {
+    if (e.keyCode === 27) {
+      this.setState({
+        isOpenModal: false,
+      });
+    }
   };
 
   render() {
-    const { items, isLoader } = this.state;
+    const { items, isLoader, isOpenModal, largeImage, error } = this.state;
     return (
       <>
+        {isLoader && <Loader />}
+        {error && <ErrorMessage>{error}</ErrorMessage>}
         <ContainerGallery>
-          {isLoader && <Loader />}
-          {items &&
+          {items.length > 0 &&
             items.map(item => (
               <ImageGalleryItem
                 key={item.id}
                 webImage={item.webformatURL}
                 largeImage={item.largeImageURL}
-                isOpenModal={this.handleOpenModal}
-                isCloseModal={this.handleCloseModal}
+                onClick={this.handleOpenModal}
               />
             ))}
+          {isOpenModal && (
+            <Modal closeModal={this.handleCloseModal} url={largeImage} />
+          )}
         </ContainerGallery>
-        <Button />
+        {items.length > 11 && <Button onLoadMore={this.handleLoadMore} />}
       </>
     );
   }
