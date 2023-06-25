@@ -15,7 +15,7 @@ jobs:
       - name: Install, lint, build 🔧
         run: |
           yarn install
-          yarn run lint:js
+          yarn lint:js
           yarn run build
         env:
           REACT_APP_SECRET_KEY_API: ${{ secrets.REACT_APP_SECRET_KEY_API }}
