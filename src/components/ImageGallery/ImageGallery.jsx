@@ -21,12 +21,13 @@ const notifyOptions = {
   progress: undefined,
   theme: 'colored',
 };
+
+let page = 1;
 class ImageGallery extends Component {
   state = {
     items: [],
     currentQuery: '',
     largeImage: '',
-    page: 1,
     isLoader: false,
     isOpenModal: false,
     error: null,
@@ -38,13 +39,8 @@ class ImageGallery extends Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    const page = this.state.page;
-
     if (prevProps !== this.props) {
       this.fetchImages(this.props.query, page);
-    }
-    if (prevState.page !== page) {
-      this.fetchImages(this.state.currentQuery, page);
     }
   }
 
@@ -61,12 +57,11 @@ class ImageGallery extends Component {
     });
 
     if (query !== this.state.currentQuery) {
-      this.setState({ items: [], page: 1 });
+      this.setState({ items: [] });
     }
 
     try {
       const data = await fetchImages(query, page);
-
       if (data.hits.length <= 0) {
         toast.error(
           `Sorry, there are no images matching your search query '${query}'. Please try again.`,
@@ -93,7 +88,7 @@ class ImageGallery extends Component {
   };
 
   handleLoadMore = () => {
-    this.setState(state => ({ page: (state.page += 1) }));
+    this.fetchImages(this.state.currentQuery, (page += 1));
   };
 
   handleOpenModal = url =>
